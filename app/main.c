@@ -44,8 +44,8 @@ int main(int argc, char *argv[]) {
 		close(fdErr[1]);
 	} else {
 		// We're in parent
-		close(fdOut[0]);
-		close(fdErr[0]);
+		close(fdOut[1]);
+		close(fdErr[1]);
 
 		int len;
 		char buffer_out[1024];
@@ -56,17 +56,17 @@ int main(int argc, char *argv[]) {
 			printf("Error reading output...");
 			return -1;
 		}
-		write(fdOut[1], buffer_out, len);
+		write(1, buffer_out, len);
 
 		// Read output buffer
 		if((len = read(fdErr[0], buffer_err, 1024)) == -1) {
 			printf("Error reading err...");
 			return -1;
 		}
-		write(fdErr[1], buffer_err, len);
+		write(2, buffer_err, len);
 
-		close(fdOut[1]);
-		close(fdErr[1]);
+		close(fdOut[0]);
+		close(fdErr[0]);
 
 		wait(NULL);
 	    printf("Child terminated");
