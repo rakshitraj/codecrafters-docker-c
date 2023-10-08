@@ -2,8 +2,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-// File descriptor
-typedef int pipefd_t[2];
 
 // Usage: your_docker.sh run <image> <command> <arg1> <arg2> ...
 int main(int argc, char *argv[]) {
@@ -14,8 +12,8 @@ int main(int argc, char *argv[]) {
 	printf("Logs from your program will appear here!\n");
 
 	// Decalare pipe file descriptors for output and error
-	pipefd_t fdOut;
-	pipefd_t fdErr;
+	int fdOut[2];
+	int fdErr[2];
 
 	if (pipe(fdOut) == -1 || pipe(fdErr) == -1) {
 		printf("Error initializing pipe.");
@@ -35,21 +33,18 @@ int main(int argc, char *argv[]) {
 		close(fdOut[0]);
 		close(fdErr[0]);
 
-		dup2(fdOut[1], STDOUT_FILENO);
-		dup2(fdErr[1], STDERR_FILENO);
+		fdOut[1] = dup(1);
+		fdErr[1] = dup(2);
 
 		execv(command, &argv[3]);
-
-		close(fdOut[1]);
-		close(fdErr[1]);
 	} else {
 		// We're in parent
-		close(fdOut[1]);
-		close(fdErr[1]);
-
 		int len;
 		char buffer_out[1024];
 		char buffer_err[1024];
+
+		close(fdOut[1]);
+		close(fdErr[1]);
 
 		// Read output buffer
 		if((len = read(fdOut[0], buffer_out, 1024)) == -1) {
