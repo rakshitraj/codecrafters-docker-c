@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
 	setbuf(stdout, NULL);
 
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
-	printf("Logs from your program will appear here!\n");
+	// printf("Logs from your program will appear here!\n");
 
 	// Decalare pipe file descriptors for output and error
 	int fdOut[2];
