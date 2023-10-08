@@ -29,42 +29,42 @@ int main(int argc, char *argv[]) {
 	
 	if (child_pid == 0) {
 		// In the child process
-		// Replace current program with calling program
-		close(fdOut[0]);
-		close(fdErr[0]);
+        close(fdOut[0]);  // Close read end of output pipe
+        close(fdErr[0]);  // Close read end of error pipe
 
-		fdOut[1] = dup(1);
-		fdErr[1] = dup(2);
+        dup2(fdOut[1], STDOUT_FILENO);  // Redirect standard output to write end of output pipe
+        dup2(fdErr[1], STDERR_FILENO);  // Redirect standard error to write end of error pipe
 
-		execv(command, &argv[3]);
+        close(fdOut[1]);  // Close write end of output pipe, already duplicated to STDOUT
+        close(fdErr[1]);  // Close write end of error pipe, already duplicated to STDERR
+
+        execv(command, &argv[3]);
+
+		// // If execv fails:
+        // perror("Error executing command");
+        // _exit(1);  // Use _exit in a child after fork (avoid flushing stdio buffers again)
 	} else {
-		// We're in parent
-		int len;
-		char buffer_out[1024];
-		char buffer_err[1024];
+		// In the parent
+        int len;
+        char buffer_out[1024];
+        char buffer_err[1024];
 
-		close(fdOut[1]);
-		close(fdErr[1]);
+        close(fdOut[1]);  // Close write end of output pipe
+        close(fdErr[1]);  // Close write end of error pipe
 
-		// Read output buffer
-		if((len = read(fdOut[0], buffer_out, 1024)) == -1) {
-			printf("Error reading output...");
-			return -1;
-		}
-		write(1, buffer_out, len);
+        while ((len = read(fdOut[0], buffer_out, sizeof(buffer_out))) > 0) {
+            write(STDOUT_FILENO, buffer_out, len);
+        }
 
-		// Read output buffer
-		if((len = read(fdErr[0], buffer_err, 1024)) == -1) {
-			printf("Error reading err...");
-			return -1;
-		}
-		write(2, buffer_err, len);
+        while ((len = read(fdErr[0], buffer_err, sizeof(buffer_err))) > 0) {
+            write(STDERR_FILENO, buffer_err, len);
+        }
 
-		close(fdOut[0]);
-		close(fdErr[0]);
+        close(fdOut[0]);
+        close(fdErr[0]);
 
-		wait(NULL);
-	    printf("Child terminated");
+        wait(NULL);
+        printf("Child terminated\n");
 	}
 
 	return 0;
