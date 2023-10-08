@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
         close(fdErr[0]);
 
         wait(NULL);
-        printf("Child terminated\n");
+        // printf("Child terminated\n");
 	}
 
 	return 0;
